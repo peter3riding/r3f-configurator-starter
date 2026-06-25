@@ -1,33 +1,26 @@
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Environment, Center } from "@react-three/drei";
+import { Environment, Center, CameraControls } from "@react-three/drei";
 
-function Scene() {
+export default function App() {
   return (
-    <>
+    <Canvas shadows camera={{ position: [-1, 0, 2.5], fov: 25 }}>
       <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 5, 5]} />
+      <Environment preset="city" />
 
       <Center>
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="orange" />
-        </mesh>
+        <Shirt />
       </Center>
 
-      <OrbitControls />
-      <Environment preset="sunset" />
-    </>
+      <CameraControls />
+    </Canvas>
   );
 }
 
-function App() {
+function Shirt() {
   return (
-    <div className="w-screen h-screen">
-      <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-        <Scene />
-      </Canvas>
-    </div>
+    <mesh>
+      <boxGeometry args={[0.8, 0.8, 0.8]} />
+      <meshStandardMaterial />
+    </mesh>
   );
 }
-
-export default App;
