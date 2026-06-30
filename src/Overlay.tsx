@@ -1,19 +1,51 @@
 import { Logo } from "@pmndrs/branding";
 import { ShoppingCart, Sparkles, Download, ArrowLeft } from "lucide-react";
 import useStore from "./stores/stores.ts";
+import { motion, AnimatePresence } from "motion/react";
 
-export default function Overlay() {
+type Props = {
+  download: (() => void) | null;
+};
+
+const variants = {
+  hidden: {
+    x: -500,
+    opacity: 0,
+  },
+  visible: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: {
+    x: -500,
+    opacity: 0,
+  },
+};
+
+export default function Overlay({ download }: Props) {
   const intro = useStore((state) => state.intro);
 
   return (
     <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-      <header className="flex justify-between w-full px-10 py-10 items-center fixed">
+      <motion.header
+        initial={{ opacity: 0, y: -120 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", duration: 1.8, delay: 1 }}
+        className="flex justify-between w-full px-10 py-10 items-center fixed"
+      >
         <Logo width="40" height="40" />
         <div>
           <ShoppingCart />
         </div>
-      </header>
-      {intro ? <Intro /> : <Customizer />}
+      </motion.header>
+
+      <AnimatePresence mode="wait">
+        {intro ? (
+          <Intro key="intro" />
+        ) : (
+          <Customizer key="customizer" download={download} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -21,17 +53,28 @@ export default function Overlay() {
 function Intro() {
   const setShowIntro = useStore((state) => state.setIntro);
   return (
-    <section
+    <motion.section
+      variants={variants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      transition={{
+        type: "spring",
+        duration: 0.8,
+      }}
       key="main"
-      className="absolute top-0 left-0 flex justify-center flex-col h-full w-full items-center "
+      className="max-[600px]:ml-[15vw] absolute top-0 left-0 flex justify-center flex-col h-full w-full items-center "
     >
       <div className="mt-[5vh] ml-[5vw]">
         <div>
-          <h1 className="font-black text-[16vw] tracking-[-6px] italic w-[30%] leading-[15vh] font-['Nunito_Sans']">
+          <h1 className="max-[600px]:text-[5rem] max-[600px]:tracking-[-6px] max-[600px]:leading-18 font-black text-[16vw] tracking-[-6px] italic w-[30%] leading-[15vh] font-['Nunito_Sans']">
             LET'S DO IT.
           </h1>
         </div>
-        <div className="relative top-[-25%] left-75">
+        <div
+          className="  max-[600px]:top-[5%]
+    max-[600px]:left-0 relative top-[-25%] left-75"
+        >
           <div>
             <p className="w-87.5 mb-12 leading-6">
               Create your unique and exclusive shirt with our brand-new 3D
@@ -47,15 +90,13 @@ function Intro() {
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
-function Customizer() {
+function Customizer({ download }: Props) {
   const setShowIntro = useStore((state) => state.setIntro);
-
   const setColor = useStore((state) => state.setSelectedColor);
-
   const setDecal = useStore((state) => state.setSelectedDecal);
 
   const colors = [
@@ -67,22 +108,50 @@ function Customizer() {
     "#353934",
     "Purple",
   ];
+
   const decals = ["react", "three2", "pmndrs"];
 
   return (
-    <section key="custom">
+    <section>
       <div className="customizer">
-        <div className="color-options">
+        <motion.div
+          variants={variants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          transition={{
+            type: "spring",
+            duration: 0.8,
+          }}
+          className="color-options
+            max-[600px]:mb-5
+            max-[600px]:flex-col
+            max-[600px]:absolute
+            max-[600px]:top-1/2
+            max-[600px]:right-10
+            max-[600px]:-translate-y-1/2"
+        >
           {colors.map((color) => (
             <div
               key={color}
               className="circle pointer-events-auto"
               style={{ background: color }}
               onClick={() => setColor(color)}
-            ></div>
+            />
           ))}
-        </div>
-        <div className="decals">
+        </motion.div>
+
+        <motion.div
+          variants={variants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          transition={{
+            type: "spring",
+            duration: 0.8,
+          }}
+          className="decals"
+        >
           <div className="decals--container">
             {decals.map((decal) => (
               <div
@@ -94,20 +163,43 @@ function Customizer() {
               </div>
             ))}
           </div>
-        </div>
-        <button className="share" style={{ background: "black" }}>
+        </motion.div>
+
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          variants={variants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          transition={{
+            type: "spring",
+            duration: 0.8,
+          }}
+          className="share"
+          style={{ background: "black" }}
+          onClick={() => download?.()}
+        >
           DOWNLOAD
           <Download size="1.3em" />
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          variants={variants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          transition={{
+            type: "spring",
+            duration: 0.8,
+          }}
           className="exit"
           style={{ background: "black" }}
           onClick={() => setShowIntro(true)}
         >
           GO BACK
           <ArrowLeft size="1.3em" />
-        </button>
+        </motion.button>
       </div>
     </section>
   );

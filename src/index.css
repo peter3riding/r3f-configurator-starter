@@ -59,7 +59,9 @@ button {
   font-weight: bolder;
   pointer-events: all;
   cursor: pointer;
-  transition: all 0.4s ease-in-out;
+  transition:
+    background-color 0.4s ease-in-out,
+    box-shadow 0.4s ease-in-out;
   box-shadow: inset 0 0 0 0.09px black;
 
   text-transform: uppercase;

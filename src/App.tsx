@@ -10,15 +10,27 @@ import {
   useTexture,
   Decal,
 } from "@react-three/drei";
-import { useRef, type ReactNode } from "react";
+import { useRef, useEffect, type ReactNode } from "react";
 import { Group } from "three";
 import { easing } from "maath";
 import useStore from "./stores/stores";
 import type { ThreeElements } from "@react-three/fiber";
+import { useThree } from "@react-three/fiber";
 
-export default function App() {
+type Props = {
+  setDownload: React.Dispatch<React.SetStateAction<(() => void) | null>>;
+};
+
+export default function App({ setDownload }: Props) {
   return (
-    <Canvas className="r3f" shadows camera={{ position: [0, 0, 2.5], fov: 25 }}>
+    <Canvas
+      className="r3f"
+      shadows
+      gl={{ preserveDrawingBuffer: true }}
+      camera={{ position: [0, 0, 2.5], fov: 25 }}
+    >
+      <CanvasExporter setDownload={setDownload} />
+
       <ambientLight intensity={0.75} />
       <Environment preset="city" />
 
@@ -66,18 +78,27 @@ function Shirt(props: ThreeElements["group"]) {
         position={[0.419, 0, 0]}
         rotation={[Math.PI / 2, 0, 0]}
       >
-        {" "}
         <Decal
-          position={[0, 0.04, 0.15]}
-          rotation={[0, 0, 0]}
-          scale={0.15}
-          map={texture}
-          map-anisotropy={16}
-          // Modern props:
-          depthTest={true}
-          depthWrite={false} // Usually better for decals
-          transparent
-        />
+          position={[-0.41, 0.01, -0.35]}
+          rotation={[
+            (-90 * Math.PI) / 180,
+            (-4 * Math.PI) / 180,
+            (1.6 * Math.PI) / 180,
+          ]}
+          scale={[0.15, 0.15, 0.54]}
+        >
+          <meshBasicMaterial
+            map={texture}
+            transparent
+            polygonOffset
+            polygonOffsetFactor={-10} //
+            polygonOffsetUnits={-4}
+            depthWrite={false}
+            alphaTest={0.01}
+            opacity={0.7}
+            map-anisotropy={16}
+          />
+        </Decal>
       </mesh>
     </group>
   );
@@ -107,7 +128,7 @@ function Backdrop() {
       alphaTest={0.2}
       scale={2}
       rotation={[Math.PI / 2, 0, 0]}
-      position={[0, 0, -0.14]}
+      position={[0, 0, -0.214]}
     >
       <RandomizedLight
         amount={5}
@@ -134,18 +155,43 @@ type CameraRigProps = {
 function CameraRig({ children }: CameraRigProps) {
   const group = useRef<Group>(null!);
 
+  const intro = useStore((state) => state.intro);
+
   useFrame((state, delta) => {
     easing.damp3(state.camera.position, [0, 0, 2], 0.25, delta);
 
-    easing.dampE(
-      group.current.rotation,
-      [state.pointer.y / 10, -state.pointer.x / 5, 0],
+    easing.damp3(
+      state.camera.position,
+      [intro ? -state.viewport.width / 4 : 0, 0, 2],
       0.25,
       delta,
     );
   });
 
   return <group ref={group}>{children}</group>;
+}
+
+function CanvasExporter({ setDownload }: Props) {
+  const { gl } = useThree();
+
+  useEffect(() => {
+    setDownload(() => () => {
+      gl.domElement.toBlob((blob) => {
+        if (!blob) return;
+
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "custom-shirt.png";
+        link.click();
+
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    });
+  }, [gl, setDownload]);
+
+  return null;
 }
 
 useGLTF.preload("/shirt_baked4.glb");
