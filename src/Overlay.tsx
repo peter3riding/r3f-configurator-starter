@@ -1,24 +1,41 @@
 import { Logo } from "@pmndrs/branding";
 import { ShoppingCart, Sparkles, Download, ArrowLeft } from "lucide-react";
 import useStore from "./stores/stores.ts";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, type Variants } from "motion/react";
 
 type Props = {
   download: (() => void) | null;
 };
 
-const variants = {
-  hidden: {
-    x: -500,
-    opacity: 0,
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
   },
+  exit: {
+    opacity: 0,
+    transition: {
+      staggerChildren: 0.05,
+      staggerDirection: -1,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { x: -100, opacity: 0 },
   visible: {
     x: 0,
     opacity: 1,
+    transition: { type: "spring", stiffness: 120, damping: 18 },
   },
   exit: {
-    x: -500,
+    x: -100,
     opacity: 0,
+    transition: { duration: 0.3, ease: "easeIn" },
   },
 };
 
@@ -54,40 +71,39 @@ function Intro() {
   const setShowIntro = useStore((state) => state.setIntro);
   return (
     <motion.section
-      variants={variants}
+      variants={containerVariants}
       initial="hidden"
       animate="visible"
       exit="exit"
-      transition={{
-        type: "spring",
-        duration: 0.8,
-      }}
       key="main"
       className="max-[600px]:ml-[15vw] absolute top-0 left-0 flex justify-center flex-col h-full w-full items-center "
     >
       <div className="mt-[5vh] ml-[5vw]">
-        <div>
+        <motion.div variants={itemVariants}>
           <h1 className="max-[600px]:text-[5rem] max-[600px]:tracking-[-6px] max-[600px]:leading-18 font-black text-[16vw] tracking-[-6px] italic w-[30%] leading-[15vh] font-['Nunito_Sans']">
             LET'S DO IT.
           </h1>
-        </div>
+        </motion.div>
         <div
           className="  max-[600px]:top-[5%]
     max-[600px]:left-0 relative top-[-25%] left-75"
         >
-          <div>
+          <motion.div variants={itemVariants}>
             <p className="w-87.5 mb-12 leading-6">
               Create your unique and exclusive shirt with our brand-new 3D
               customization tool. <strong>Unleash your imagination</strong> and
               define your own style.
             </p>
-            <button
+            <motion.button
+              variants={itemVariants}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               style={{ background: "black" }}
               onClick={() => setShowIntro(false)}
             >
               CUSTOMIZE IT <Sparkles />
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </div>
       </div>
     </motion.section>
@@ -112,17 +128,15 @@ function Customizer({ download }: Props) {
   const decals = ["react", "three2", "pmndrs"];
 
   return (
-    <section>
+    <motion.section
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
       <div className="customizer">
         <motion.div
-          variants={variants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={{
-            type: "spring",
-            duration: 0.8,
-          }}
+          variants={itemVariants}
           className="color-options
             max-[600px]:mb-5
             max-[600px]:flex-col
@@ -141,17 +155,7 @@ function Customizer({ download }: Props) {
           ))}
         </motion.div>
 
-        <motion.div
-          variants={variants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={{
-            type: "spring",
-            duration: 0.8,
-          }}
-          className="decals"
-        >
+        <motion.div variants={itemVariants} className="decals">
           <div className="decals--container">
             {decals.map((decal) => (
               <div
@@ -166,15 +170,9 @@ function Customizer({ download }: Props) {
         </motion.div>
 
         <motion.button
+          variants={itemVariants}
           whileHover={{ scale: 1.1 }}
-          variants={variants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={{
-            type: "spring",
-            duration: 0.8,
-          }}
+          whileTap={{ scale: 0.95 }}
           className="share"
           style={{ background: "black" }}
           onClick={() => download?.()}
@@ -184,15 +182,9 @@ function Customizer({ download }: Props) {
         </motion.button>
 
         <motion.button
+          variants={itemVariants}
           whileHover={{ scale: 1.1 }}
-          variants={variants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={{
-            type: "spring",
-            duration: 0.8,
-          }}
+          whileTap={{ scale: 0.95 }}
           className="exit"
           style={{ background: "black" }}
           onClick={() => setShowIntro(true)}
@@ -201,6 +193,6 @@ function Customizer({ download }: Props) {
           <ArrowLeft size="1.3em" />
         </motion.button>
       </div>
-    </section>
+    </motion.section>
   );
 }
