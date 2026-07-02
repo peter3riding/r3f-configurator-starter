@@ -8,18 +8,32 @@ import { shirtConfig } from "./config/shirtConfig";
 
 type Props = {
   download: (() => void) | null;
+  isLoaded: boolean;
 };
 
-export default function Overlay({ download }: Props) {
+export default function Overlay({ download, isLoaded }: Props) {
   const intro = useStore((state) => state.intro);
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+    <motion.div
+      className="absolute top-0 left-0 w-full h-full pointer-events-none"
+      initial={{ opacity: 0 }}
+      animate={{
+        opacity: isLoaded ? 1 : 0,
+      }}
+      transition={{
+        duration: 0.8,
+        delay: isLoaded ? 2.2 : 0,
+      }}
+    >
       <motion.header
         initial={{ opacity: 0, y: -120 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", duration: 1.8, delay: 1 }}
-        className="flex justify-between w-full px-10 py-10 items-center fixed"
+        animate={{
+          opacity: isLoaded ? 1 : 0,
+          y: isLoaded ? 0 : -120,
+        }}
+        transition={{ duration: 1.1, delay: isLoaded ? 1.2 : 0 }}
+        className="flex justify-between w-full px-10 py-10 items-center fixed z-50"
       >
         <Logo width="40" height="40" />
         <div>
@@ -28,13 +42,14 @@ export default function Overlay({ download }: Props) {
       </motion.header>
 
       <AnimatePresence mode="wait">
-        {intro ? (
-          <Intro key="intro" />
-        ) : (
-          <Customizer key="customizer" download={download} />
-        )}
+        {isLoaded &&
+          (intro ? (
+            <Intro key="intro" />
+          ) : (
+            <Customizer key="customizer" download={download} />
+          ))}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 

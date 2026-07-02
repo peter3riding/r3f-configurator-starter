@@ -10,42 +10,48 @@ import {
   useTexture,
   Decal,
 } from "@react-three/drei";
-import { useRef, useEffect, type ReactNode } from "react";
+import { Suspense, useRef, useEffect, type ReactNode, useState } from "react";
 import { Group } from "three";
 import { easing } from "maath";
 import { useStore, useSelectedColor, useSelectedDecal } from "./stores/stores"; // ← Updated import
 import type { ThreeElements } from "@react-three/fiber";
 import { useThree } from "@react-three/fiber";
+import { Loader } from "./components/Loader";
 
 type Props = {
   setDownload: React.Dispatch<React.SetStateAction<(() => void) | null>>;
+  onLoaded: () => void;
 };
 
-export default function App({ setDownload }: Props) {
+export default function App({ setDownload, onLoaded }: Props) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   return (
-    <Canvas
-      dpr={[1, 2]}
-      className="r3f"
-      shadows
-      gl={{ preserveDrawingBuffer: true }}
-      camera={{ position: [0, 0, 2.5], fov: 25 }}
-    >
-      <CanvasExporter setDownload={setDownload} />
-
-      <ambientLight intensity={0.75} />
-      <Environment preset="city" />
-
-      <CameraRig>
-        <Backdrop />
-
-        <Center>
-          <Shirt />
-        </Center>
-      </CameraRig>
-    </Canvas>
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* 3D Canvas */}
+      <Canvas
+        dpr={[1, 2]}
+        className="r3f"
+        shadows
+        gl={{ preserveDrawingBuffer: true }}
+        camera={{ position: [0, 0, 2.5], fov: 25 }}
+      >
+        <Suspense fallback={null}>
+          <CanvasExporter setDownload={setDownload} />
+          <ambientLight intensity={0.75} />
+          <Environment preset="city" />
+          <CameraRig>
+            <Backdrop />
+            <Center>
+              <Shirt />
+            </Center>
+          </CameraRig>
+        </Suspense>
+        <Loader onLoaded={onLoaded} />
+      </Canvas>
+    </div>
   );
 }
-
 // ====================== SHIRT ======================
 function Shirt(props: ThreeElements["group"]) {
   const { hex: color } = useSelectedColor() || { hex: "#EFBD4E" }; // fallback
