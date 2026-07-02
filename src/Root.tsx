@@ -12,7 +12,7 @@ export default function Root() {
     <>
       <App setDownload={setDownload} />
       <Overlay download={download} />
-      <Leva collapsed />
+      {import.meta.env.DEV && <Leva collapsed />}
     </>
   );
 }
