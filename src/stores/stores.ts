@@ -1,41 +1,56 @@
 import { create } from "zustand";
-import { subscribeWithSelector } from "zustand/middleware";
+import { devtools } from "zustand/middleware";
+import {
+  shirtConfig,
+  type ColorKey,
+  type DecalKey,
+} from "../config/shirtConfig.ts";
 
-interface StoreState {
+type State = {
   intro: boolean;
+  selectedColorId: ColorKey;
+  selectedDecalId: DecalKey;
+};
 
-  colors: string[];
-  decals: string[];
-
-  selectedColor: string;
-  selectedDecal: string;
-
+type Actions = {
   setIntro: (value: boolean) => void;
-  setSelectedColor: (color: string) => void;
-  setSelectedDecal: (decal: string) => void;
-}
+  selectColor: (id: ColorKey) => void;
+  selectDecal: (id: DecalKey) => void;
+  download: () => void;
+};
 
-export default create<StoreState>()(
-  subscribeWithSelector((set) => ({
-    intro: true,
+export const useStore = create<State & Actions>()(
+  devtools(
+    (set, get) => ({
+      intro: true,
+      selectedColorId: "gold",
+      selectedDecalId: "three2",
 
-    colors: ["#ccc", "#EFBD4E", "#80C670", "#726DE8", "#EF674E", "#353934"],
+      setIntro: (value) => set({ intro: value }),
+      selectColor: (id) => set({ selectedColorId: id }),
+      selectDecal: (id) => set({ selectedDecalId: id }),
 
-    decals: ["react", "three2", "pmndrs"],
-
-    selectedColor: "#EFBD4E",
-    selectedDecal: "three2",
-
-    setIntro: (value) => set({ intro: value }),
-
-    setSelectedColor: (color) =>
-      set({
-        selectedColor: color,
-      }),
-
-    setSelectedDecal: (decal) =>
-      set({
-        selectedDecal: decal,
-      }),
-  })),
+      download: () => {
+        console.log("Downloading shirt with:", get());
+      },
+    }),
+    { name: "Shirt Configurator" },
+  ),
 );
+
+// Derived selectors
+export const useSelectedColor = () => {
+  const id = useStore((s) => s.selectedColorId);
+  return shirtConfig.colors[id];
+};
+
+export const useSelectedDecal = () => {
+  const id = useStore((s) => s.selectedDecalId);
+  return shirtConfig.decals[id];
+};
+
+export const useTotalPrice = () => {
+  const color = useSelectedColor();
+  const decal = useSelectedDecal();
+  return shirtConfig.basePrice + (color?.price ?? 0) + (decal?.price ?? 0);
+};

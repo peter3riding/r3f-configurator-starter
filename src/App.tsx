@@ -13,7 +13,7 @@ import {
 import { useRef, useEffect, type ReactNode } from "react";
 import { Group } from "three";
 import { easing } from "maath";
-import useStore from "./stores/stores";
+import { useStore, useSelectedColor, useSelectedDecal } from "./stores/stores"; // ← Updated import
 import type { ThreeElements } from "@react-three/fiber";
 import { useThree } from "@react-three/fiber";
 
@@ -24,6 +24,7 @@ type Props = {
 export default function App({ setDownload }: Props) {
   return (
     <Canvas
+      dpr={[1, 2]}
       className="r3f"
       shadows
       gl={{ preserveDrawingBuffer: true }}
@@ -45,27 +46,19 @@ export default function App({ setDownload }: Props) {
   );
 }
 
-type GLTFResult = GLTF & {
-  nodes: {
-    T_Shirt_male: THREE.Mesh;
-  };
-  materials: {
-    lambert1: THREE.MeshStandardMaterial;
-  };
-};
-
+// ====================== SHIRT ======================
 function Shirt(props: ThreeElements["group"]) {
-  const selectedDecal = useStore((state) => state.selectedDecal);
+  const { hex: color } = useSelectedColor() || { hex: "#EFBD4E" }; // fallback
+  const selectedDecal = useSelectedDecal();
 
-  const texture = useTexture(`/${selectedDecal}.png`);
+  const texture = useTexture(`/${selectedDecal?.id}.png`);
 
   const { nodes, materials } = useGLTF(
     "/shirt_baked4.glb",
   ) as unknown as GLTFResult;
 
   useFrame((_, delta) => {
-    const currentColor = useStore.getState().selectedColor;
-    easing.dampC(materials.lambert1.color, currentColor, 0.25, delta);
+    easing.dampC(materials.lambert1.color, color, 0.25, delta);
   });
 
   return (
@@ -91,7 +84,7 @@ function Shirt(props: ThreeElements["group"]) {
             map={texture}
             transparent
             polygonOffset
-            polygonOffsetFactor={-10} //
+            polygonOffsetFactor={-10}
             polygonOffsetUnits={-4}
             depthWrite={false}
             alphaTest={0.01}
@@ -104,20 +97,15 @@ function Shirt(props: ThreeElements["group"]) {
   );
 }
 
+// ====================== BACKDROP ======================
 function Backdrop() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const shadows = useRef<any>(null);
+  const { hex: color } = useSelectedColor() || { hex: "#EFBD4E" };
 
   useFrame((_, delta) => {
-    const currentColor = useStore.getState().selectedColor;
     if (!shadows.current) return;
-
-    easing.dampC(
-      shadows.current.getMesh().material.color,
-      currentColor,
-      0.25,
-      delta,
-    );
+    easing.dampC(shadows.current.getMesh().material.color, color, 0.25, delta);
   });
 
   return (
@@ -148,17 +136,14 @@ function Backdrop() {
   );
 }
 
-type CameraRigProps = {
-  children: ReactNode;
-};
-
+// ====================== CAMERA RIG ======================
 function CameraRig({ children }: CameraRigProps) {
   const group = useRef<Group>(null!);
-
   const intro = useStore((state) => state.intro);
 
+  const targetX = intro ? -0.25 : 0;
+
   useFrame((state, delta) => {
-    const targetX = intro ? -0.25 : 0;
     easing.damp3(state.camera.position, [targetX, 0, 2], 0.25, delta);
     easing.dampE(
       group.current.rotation,
@@ -171,6 +156,7 @@ function CameraRig({ children }: CameraRigProps) {
   return <group ref={group}>{children}</group>;
 }
 
+// ====================== DOWNLOAD ======================
 function CanvasExporter({ setDownload }: Props) {
   const { gl } = useThree();
 
@@ -178,14 +164,11 @@ function CanvasExporter({ setDownload }: Props) {
     setDownload(() => () => {
       gl.domElement.toBlob((blob) => {
         if (!blob) return;
-
         const url = URL.createObjectURL(blob);
-
         const link = document.createElement("a");
         link.href = url;
         link.download = "custom-shirt.png";
         link.click();
-
         URL.revokeObjectURL(url);
       }, "image/png");
     });
@@ -193,5 +176,12 @@ function CanvasExporter({ setDownload }: Props) {
 
   return null;
 }
+
+type GLTFResult = GLTF & {
+  nodes: { T_Shirt_male: THREE.Mesh };
+  materials: { lambert1: THREE.MeshStandardMaterial };
+};
+
+type CameraRigProps = { children: ReactNode };
 
 useGLTF.preload("/shirt_baked4.glb");
