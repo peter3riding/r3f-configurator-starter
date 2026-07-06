@@ -1,18 +1,16 @@
 import { Logo } from "@pmndrs/branding";
 import { ShoppingCart, Sparkles, Download, ArrowLeft } from "lucide-react";
-import { useStore } from "./stores/stores.ts";
+import { useIntro, useShirtActions } from "./stores/stores.ts";
 import { motion, AnimatePresence } from "motion/react";
 import { containerVariants, itemVariants } from "./components/ui/variants.ts";
 import ActionButton from "./components/ui/ActionButton.tsx";
 import { shirtConfig } from "./config/shirtConfig";
+import { useProgress } from "@react-three/drei";
 
-type Props = {
-  download: (() => void) | null;
-  isLoaded: boolean;
-};
-
-export default function Overlay({ download, isLoaded }: Props) {
-  const intro = useStore((state) => state.intro);
+export default function Overlay() {
+  const intro = useIntro();
+  const { active, progress } = useProgress();
+  const isLoaded = !active && progress > 0;
 
   return (
     <motion.div
@@ -43,18 +41,14 @@ export default function Overlay({ download, isLoaded }: Props) {
 
       <AnimatePresence mode="wait">
         {isLoaded &&
-          (intro ? (
-            <Intro key="intro" />
-          ) : (
-            <Customizer key="customizer" download={download} />
-          ))}
+          (intro ? <Intro key="intro" /> : <Customizer key="customizer" />)}
       </AnimatePresence>
     </motion.div>
   );
 }
 
 function Intro() {
-  const setIntro = useStore((state) => state.setIntro);
+  const { setIntro } = useShirtActions();
 
   return (
     <motion.section
@@ -88,10 +82,8 @@ function Intro() {
   );
 }
 
-function Customizer({ download }: Props) {
-  const setIntro = useStore((state) => state.setIntro);
-  const selectColor = useStore((state) => state.selectColor);
-  const selectDecal = useStore((state) => state.selectDecal);
+function Customizer() {
+  const { setIntro, selectColor, selectDecal, download } = useShirtActions();
 
   // Get all options from config
   const allColors = Object.values(shirtConfig.colors);
@@ -159,7 +151,7 @@ function Customizer({ download }: Props) {
 
         <ActionButton
           className="absolute bottom-10 right-10"
-          onClick={() => download?.()}
+          onClick={download}
         >
           DOWNLOAD
           <Download size="1.3em" />

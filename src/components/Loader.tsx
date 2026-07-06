@@ -1,27 +1,15 @@
-import { useProgress, Html } from "@react-three/drei";
-import { useEffect, useState } from "react";
+import { useProgress } from "@react-three/drei";
+import { motion } from "motion/react";
 
-type Props = {
-  onLoaded: () => void;
-};
-
-export function Loader({ onLoaded }: Props) {
-  const { progress, active } = useProgress();
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    if (progress >= 97 && !active) {
-      onLoaded(); // Notify parent
-      setTimeout(() => {
-        setVisible(false); // Hide loader
-      }, 600);
-    }
-  }, [progress, active, onLoaded]);
-
-  if (!visible) return null;
+export function Loader() {
+  const { progress } = useProgress();
 
   return (
-    <Html center portal={undefined} style={{ zIndex: 10000 }}>
+    <motion.div
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
+      className="fixed inset-0 z-50 bg-zinc-950 flex items-center justify-center"
+    >
       <div className="fixed inset-0 bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-12 w-28 h-28 relative">
@@ -34,6 +22,6 @@ export function Loader({ onLoaded }: Props) {
           <div className="text-zinc-400 text-2xl">{Math.round(progress)}%</div>
         </div>
       </div>
-    </Html>
+    </motion.div>
   );
 }

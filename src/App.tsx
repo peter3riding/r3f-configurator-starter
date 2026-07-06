@@ -10,22 +10,19 @@ import {
   useTexture,
   Decal,
 } from "@react-three/drei";
-import { Suspense, useRef, useEffect, type ReactNode, useState } from "react";
+import { Suspense, useRef, useEffect, type ReactNode } from "react";
 import { Group } from "three";
 import { easing } from "maath";
-import { useStore, useSelectedColor, useSelectedDecal } from "./stores/stores"; // ← Updated import
+import {
+  useSelectedDecal,
+  useShirtActions,
+  getShirtState,
+} from "./stores/stores"; // ← Updated import
 import type { ThreeElements } from "@react-three/fiber";
 import { useThree } from "@react-three/fiber";
-import { Loader } from "./components/Loader";
+import { shirtConfig } from "./config/shirtConfig";
 
-type Props = {
-  setDownload: React.Dispatch<React.SetStateAction<(() => void) | null>>;
-  onLoaded: () => void;
-};
-
-export default function App({ setDownload, onLoaded }: Props) {
-  const [isLoaded, setIsLoaded] = useState(false);
-
+export default function App() {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* 3D Canvas */}
@@ -37,7 +34,7 @@ export default function App({ setDownload, onLoaded }: Props) {
         camera={{ position: [0, 0, 2.5], fov: 25 }}
       >
         <Suspense fallback={null}>
-          <CanvasExporter setDownload={setDownload} />
+          <CanvasExporter />
           <ambientLight intensity={0.75} />
           <Environment preset="city" />
           <CameraRig>
@@ -47,24 +44,28 @@ export default function App({ setDownload, onLoaded }: Props) {
             </Center>
           </CameraRig>
         </Suspense>
-        <Loader onLoaded={onLoaded} />
       </Canvas>
     </div>
   );
 }
 // ====================== SHIRT ======================
 function Shirt(props: ThreeElements["group"]) {
-  const { hex: color } = useSelectedColor() || { hex: "#EFBD4E" }; // fallback
   const selectedDecal = useSelectedDecal();
 
-  const texture = useTexture(`/${selectedDecal?.id}.png`);
+  const texture = useTexture(`/${selectedDecal.id}.png`);
 
   const { nodes, materials } = useGLTF(
     "/shirt_baked4.glb",
   ) as unknown as GLTFResult;
 
   useFrame((_, delta) => {
-    easing.dampC(materials.lambert1.color, color, 0.25, delta);
+    const { selectedColorId } = getShirtState();
+    easing.dampC(
+      materials.lambert1.color,
+      shirtConfig.colors[selectedColorId].hex,
+      0.25,
+      delta,
+    );
   });
 
   return (
@@ -107,11 +108,18 @@ function Shirt(props: ThreeElements["group"]) {
 function Backdrop() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const shadows = useRef<any>(null);
-  const { hex: color } = useSelectedColor() || { hex: "#EFBD4E" };
 
   useFrame((_, delta) => {
     if (!shadows.current) return;
-    easing.dampC(shadows.current.getMesh().material.color, color, 0.25, delta);
+
+    const { selectedColorId } = getShirtState();
+
+    easing.dampC(
+      shadows.current.getMesh().material.color,
+      shirtConfig.colors[selectedColorId].hex,
+      0.25,
+      delta,
+    );
   });
 
   return (
@@ -143,31 +151,31 @@ function Backdrop() {
 }
 
 // ====================== CAMERA RIG ======================
-function CameraRig({ children }: CameraRigProps) {
-  const group = useRef<Group>(null!);
-  const intro = useStore((state) => state.intro);
+const CAMERA_TARGET: [number, number, number] = [0, 0, 2];
+const ROTATION_TARGET: [number, number, number] = [0, 0, 0];
 
-  const targetX = intro ? -0.25 : 0;
+function CameraRig({ children }: { children: ReactNode }) {
+  const group = useRef<Group>(null!);
 
   useFrame((state, delta) => {
-    easing.damp3(state.camera.position, [targetX, 0, 2], 0.25, delta);
-    easing.dampE(
-      group.current.rotation,
-      [state.pointer.y / 10, -state.pointer.x / 5, 0],
-      0.25,
-      delta,
-    );
+    const { intro } = getShirtState(); // frame-only → transient
+    CAMERA_TARGET[0] = intro ? -0.25 : 0;
+    easing.damp3(state.camera.position, CAMERA_TARGET, 0.25, delta);
+
+    ROTATION_TARGET[0] = state.pointer.y / 10;
+    ROTATION_TARGET[1] = -state.pointer.x / 5;
+    easing.dampE(group.current.rotation, ROTATION_TARGET, 0.25, delta);
   });
 
   return <group ref={group}>{children}</group>;
 }
 
 // ====================== DOWNLOAD ======================
-function CanvasExporter({ setDownload }: Props) {
+function CanvasExporter() {
+  const { registerDownload } = useShirtActions();
   const { gl } = useThree();
-
   useEffect(() => {
-    setDownload(() => () => {
+    const fn = () => {
       gl.domElement.toBlob((blob) => {
         if (!blob) return;
         const url = URL.createObjectURL(blob);
@@ -177,9 +185,10 @@ function CanvasExporter({ setDownload }: Props) {
         link.click();
         URL.revokeObjectURL(url);
       }, "image/png");
-    });
-  }, [gl, setDownload]);
-
+    };
+    registerDownload(fn);
+    return () => registerDownload(null);
+  }, [gl, registerDownload]);
   return null;
 }
 
@@ -188,6 +197,7 @@ type GLTFResult = GLTF & {
   materials: { lambert1: THREE.MeshStandardMaterial };
 };
 
-type CameraRigProps = { children: ReactNode };
-
+Object.values(shirtConfig.decals).forEach((d) =>
+  useTexture.preload(`/${d.id}.png`),
+);
 useGLTF.preload("/shirt_baked4.glb");
