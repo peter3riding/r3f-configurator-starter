@@ -82,12 +82,12 @@ function Intro() {
   );
 }
 
+// Get all options from config
+const ALL_COLORS = Object.values(shirtConfig.colors);
+const ALL_DECALS = Object.values(shirtConfig.decals);
+
 function Customizer() {
   const { setIntro, selectColor, selectDecal, download } = useShirtActions();
-
-  // Get all options from config
-  const allColors = Object.values(shirtConfig.colors);
-  const allDecals = Object.values(shirtConfig.decals);
 
   return (
     <motion.section
@@ -104,7 +104,7 @@ function Customizer() {
             max-[600px]:mb-5 max-[600px]:flex-col max-[600px]:absolute
             max-[600px]:top-1/2 max-[600px]:right-10 max-[600px]:-translate-y-1/2"
         >
-          {allColors.map((colorOption) => (
+          {ALL_COLORS.map((colorOption) => (
             <motion.button
               type="button"
               key={colorOption.id}
@@ -123,7 +123,7 @@ function Customizer() {
           className="absolute left-12.5 bottom-10"
         >
           <div className="flex gap-5">
-            {allDecals.map((decalOption) => (
+            {ALL_DECALS.map((decalOption) => (
               <button
                 type="button"
                 key={decalOption.id}
