@@ -18,13 +18,13 @@ export const colors = {
     price: 5,
     hex: "#800080",
   },
-} as const;
+} as const satisfies Record<string, OptionValue>;
 
 export const decals = {
   react: { id: "react", label: "React", price: 10 },
   three2: { id: "three2", label: "Three.js", price: 12 },
   pmndrs: { id: "pmndrs", label: "PMNDRS", price: 8 },
-} as const;
+} as const satisfies Record<string, OptionValue>;
 
 export const shirtConfig = {
   basePrice: 25,

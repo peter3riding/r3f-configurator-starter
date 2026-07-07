@@ -1,25 +1,37 @@
 import { Logo } from "@pmndrs/branding";
 import { ShoppingCart, Sparkles, Download, ArrowLeft } from "lucide-react";
-import { useStore } from "./stores/stores.ts";
+import { useIntro, useShirtActions } from "./stores/stores.ts";
 import { motion, AnimatePresence } from "motion/react";
 import { containerVariants, itemVariants } from "./components/ui/variants.ts";
 import ActionButton from "./components/ui/ActionButton.tsx";
 import { shirtConfig } from "./config/shirtConfig";
+import { useProgress } from "@react-three/drei";
 
-type Props = {
-  download: (() => void) | null;
-};
-
-export default function Overlay({ download }: Props) {
-  const intro = useStore((state) => state.intro);
+export default function Overlay() {
+  const intro = useIntro();
+  const { active, progress } = useProgress();
+  const isLoaded = !active && progress > 0;
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+    <motion.div
+      className="absolute top-0 left-0 w-full h-full pointer-events-none"
+      initial={{ opacity: 0 }}
+      animate={{
+        opacity: isLoaded ? 1 : 0,
+      }}
+      transition={{
+        duration: 0.8,
+        delay: isLoaded ? 2.2 : 0,
+      }}
+    >
       <motion.header
         initial={{ opacity: 0, y: -120 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", duration: 1.8, delay: 1 }}
-        className="flex justify-between w-full px-10 py-10 items-center fixed"
+        animate={{
+          opacity: isLoaded ? 1 : 0,
+          y: isLoaded ? 0 : -120,
+        }}
+        transition={{ duration: 1.1, delay: isLoaded ? 1.2 : 0 }}
+        className="flex justify-between w-full px-10 py-10 items-center fixed z-50"
       >
         <Logo width="40" height="40" />
         <div>
@@ -28,18 +40,15 @@ export default function Overlay({ download }: Props) {
       </motion.header>
 
       <AnimatePresence mode="wait">
-        {intro ? (
-          <Intro key="intro" />
-        ) : (
-          <Customizer key="customizer" download={download} />
-        )}
+        {isLoaded &&
+          (intro ? <Intro key="intro" /> : <Customizer key="customizer" />)}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 
 function Intro() {
-  const setIntro = useStore((state) => state.setIntro);
+  const { setIntro } = useShirtActions();
 
   return (
     <motion.section
@@ -73,14 +82,12 @@ function Intro() {
   );
 }
 
-function Customizer({ download }: Props) {
-  const setIntro = useStore((state) => state.setIntro);
-  const selectColor = useStore((state) => state.selectColor);
-  const selectDecal = useStore((state) => state.selectDecal);
+// Get all options from config
+const ALL_COLORS = Object.values(shirtConfig.colors);
+const ALL_DECALS = Object.values(shirtConfig.decals);
 
-  // Get all options from config
-  const allColors = Object.values(shirtConfig.colors);
-  const allDecals = Object.values(shirtConfig.decals);
+function Customizer() {
+  const { setIntro, selectColor, selectDecal, download } = useShirtActions();
 
   return (
     <motion.section
@@ -97,7 +104,7 @@ function Customizer({ download }: Props) {
             max-[600px]:mb-5 max-[600px]:flex-col max-[600px]:absolute
             max-[600px]:top-1/2 max-[600px]:right-10 max-[600px]:-translate-y-1/2"
         >
-          {allColors.map((colorOption) => (
+          {ALL_COLORS.map((colorOption) => (
             <motion.button
               type="button"
               key={colorOption.id}
@@ -116,7 +123,7 @@ function Customizer({ download }: Props) {
           className="absolute left-12.5 bottom-10"
         >
           <div className="flex gap-5">
-            {allDecals.map((decalOption) => (
+            {ALL_DECALS.map((decalOption) => (
               <button
                 type="button"
                 key={decalOption.id}
@@ -144,7 +151,7 @@ function Customizer({ download }: Props) {
 
         <ActionButton
           className="absolute bottom-10 right-10"
-          onClick={() => download?.()}
+          onClick={download}
         >
           DOWNLOAD
           <Download size="1.3em" />
