@@ -49,7 +49,12 @@ export default function App() {
   );
 }
 // ====================== SHIRT ======================
+
 function Shirt(props: ThreeElements["group"]) {
+  // useEffect(() => {
+  //   getShirtState().hydrateFromURL();
+  // }, []);
+
   const selectedDecal = useSelectedDecal();
 
   const texture = useTexture(`/${selectedDecal.id}.png`);
@@ -201,3 +206,4 @@ Object.values(shirtConfig.decals).forEach((d) =>
   useTexture.preload(`/${d.id}.png`),
 );
 useGLTF.preload("/shirt_baked4.glb");
+getShirtState().hydrateFromURL();
