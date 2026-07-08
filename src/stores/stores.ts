@@ -5,13 +5,20 @@ import {
   shirtConfig,
   type ColorKey,
   type DecalKey,
+  type OptionValue,
 } from "../config/shirtConfig.ts";
+
+type Item = {
+  color: OptionValue;
+  decal: OptionValue;
+  price: number;
+};
 
 type State = {
   intro: boolean;
   selectedColorId: ColorKey;
   selectedDecalId: DecalKey;
-  cart: [];
+  cart: Item[];
 
   downloadHandler: (() => void) | null;
 };
@@ -49,8 +56,11 @@ const useStore = create<State & Actions>()(
       },
 
       addToCart: () => {
-        const cartTest = get().cart;
-        const updatedCart = [...cartTest, useTotalPrice()];
+        const { cart, selectedColorId, selectedDecalId } = get();
+        const color = shirtConfig.colors[selectedColorId];
+        const decal = shirtConfig.decals[selectedDecalId];
+        const price = shirtConfig.basePrice + color.price + decal.price;
+        set({ cart: [...cart, { color, decal, price }] }, false, "addToCart");
       },
 
       registerDownload: (fn) =>
@@ -112,6 +122,8 @@ export const useTotalPrice = () => {
   return shirtConfig.basePrice + color.price + decal.price;
 };
 
+export const useCart = () => useStore((s) => s.cart);
+
 // Actions hook
 export const useShirtActions = () =>
   useStore(
@@ -121,6 +133,7 @@ export const useShirtActions = () =>
       selectDecal: s.selectDecal,
       registerDownload: s.registerDownload,
       download: s.download,
+      addToCart: s.addToCart,
     })),
   );
 

@@ -1,49 +1,63 @@
 import { Logo } from "@pmndrs/branding";
-import { ShoppingCart, Sparkles, Download, ArrowLeft } from "lucide-react";
-import { useIntro, useShirtActions } from "./stores/stores.ts";
+import {
+  ShoppingCart,
+  Sparkles,
+  Download,
+  ArrowLeft,
+  Plus,
+} from "lucide-react";
+import { useIntro, useShirtActions, useTotalPrice } from "./stores/stores.ts";
 import { motion, AnimatePresence } from "motion/react";
 import { containerVariants, itemVariants } from "./components/ui/variants.ts";
 import ActionButton from "./components/ui/ActionButton.tsx";
 import { shirtConfig } from "./config/shirtConfig";
 import { useProgress } from "@react-three/drei";
-
+import { useState } from "react";
+import Cart from "./components/Cart.tsx";
 export default function Overlay() {
   const intro = useIntro();
   const { active, progress } = useProgress();
   const isLoaded = !active && progress > 0;
+  const [cartStatus, setCartStatus] = useState<boolean>(false);
 
   return (
-    <motion.div
-      className="absolute top-0 left-0 w-full h-full pointer-events-none"
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity: isLoaded ? 1 : 0,
-      }}
-      transition={{
-        duration: 0.8,
-        delay: isLoaded ? 2.2 : 0,
-      }}
-    >
-      <motion.header
-        initial={{ opacity: 0, y: -120 }}
+    <>
+      <motion.div
+        className="absolute top-0 left-0 w-full h-full pointer-events-none"
+        initial={{ opacity: 0 }}
         animate={{
           opacity: isLoaded ? 1 : 0,
-          y: isLoaded ? 0 : -120,
         }}
-        transition={{ duration: 1.1, delay: isLoaded ? 1.2 : 0 }}
-        className="flex justify-between w-full px-10 py-10 items-center fixed z-50"
+        transition={{
+          duration: 0.8,
+          delay: isLoaded ? 2.2 : 0,
+        }}
       >
-        <Logo width="40" height="40" />
-        <div>
-          <ShoppingCart />
-        </div>
-      </motion.header>
+        {cartStatus && <Cart />}
+        <motion.header
+          initial={{ opacity: 0, y: -120 }}
+          animate={{
+            opacity: isLoaded ? 1 : 0,
+            y: isLoaded ? 0 : -120,
+          }}
+          transition={{ duration: 1.1, delay: isLoaded ? 1.2 : 0 }}
+          className="flex justify-between w-full px-10 py-10 items-center fixed z-50"
+        >
+          <Logo width="40" height="40" />
+          <button
+            className="cursor-pointer pointer-events-auto"
+            onClick={() => setCartStatus((c) => (c === true ? false : true))}
+          >
+            <ShoppingCart />
+          </button>
+        </motion.header>
 
-      <AnimatePresence mode="wait">
-        {isLoaded &&
-          (intro ? <Intro key="intro" /> : <Customizer key="customizer" />)}
-      </AnimatePresence>
-    </motion.div>
+        <AnimatePresence mode="wait">
+          {isLoaded &&
+            (intro ? <Intro key="intro" /> : <Customizer key="customizer" />)}
+        </AnimatePresence>
+      </motion.div>
+    </>
   );
 }
 
@@ -87,7 +101,10 @@ const ALL_COLORS = Object.values(shirtConfig.colors);
 const ALL_DECALS = Object.values(shirtConfig.decals);
 
 function Customizer() {
-  const { setIntro, selectColor, selectDecal, download } = useShirtActions();
+  const { setIntro, selectColor, selectDecal, download, addToCart } =
+    useShirtActions();
+
+  const totalPrice = useTotalPrice();
 
   return (
     <motion.section
@@ -116,7 +133,6 @@ function Customizer() {
             />
           ))}
         </motion.div>
-
         {/* Decal Buttons */}
         <motion.div
           variants={itemVariants}
@@ -149,20 +165,30 @@ function Customizer() {
           </div>
         </motion.div>
 
-        <ActionButton
-          className="absolute bottom-10 right-10"
-          onClick={download}
-        >
-          DOWNLOAD
+        {/* // Download button */}
+        <ActionButton className="absolute top-50 left-10" onClick={download}>
           <Download size="1.3em" />
         </ActionButton>
 
+        {/* // Go back button */}
         <ActionButton
-          className="absolute top-10 right-10 shadow-[inset_0_0_0_0.09px_black]"
+          className="absolute top-30 left-10 shadow-[inset_0_0_0_0.09px_black]"
           onClick={() => setIntro(true)}
         >
-          GO BACK
           <ArrowLeft size="1.3em" />
+        </ActionButton>
+
+        {/* // Add to Cart button */}
+        <div className="absolute bottom-10 right-55">
+          <p>
+            <strong>${totalPrice}</strong>
+          </p>
+        </div>
+        <ActionButton
+          className="absolute bottom-10 right-10"
+          onClick={addToCart}
+        >
+          <Plus size="1.3em" />
         </ActionButton>
       </div>
     </motion.section>
