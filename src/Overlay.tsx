@@ -179,17 +179,25 @@ function Customizer() {
         </ActionButton>
 
         {/* // Add to Cart button */}
-        <div className="absolute bottom-10 right-55">
-          <p>
-            <strong>${totalPrice}</strong>
-          </p>
-        </div>
         <ActionButton
           className="absolute bottom-10 right-10"
           onClick={addToCart}
         >
           <Plus size="1.3em" />
         </ActionButton>
+
+        {/* // Total Price UI */}
+        <motion.div
+          variants={itemVariants}
+          className="pointer-events-none flex items-baseline gap-2 rounded-full bg-black/80 px-6 py-2.5 backdrop-blur-sm mt-5"
+        >
+          <span className="text-xs font-medium uppercase tracking-widest text-white/50">
+            Total
+          </span>
+          <span className="text-2xl font-bold tabular-nums text-white">
+            ${totalPrice.toFixed(2)}
+          </span>
+        </motion.div>
       </div>
     </motion.section>
   );
