@@ -21,6 +21,7 @@ import {
 import type { ThreeElements } from "@react-three/fiber";
 import { useThree } from "@react-three/fiber";
 import { shirtConfig } from "./config/shirtConfig";
+import { KTX2Loader } from "three-stdlib";
 
 export default function App() {
   return (
@@ -50,18 +51,24 @@ export default function App() {
 }
 // ====================== SHIRT ======================
 
+const ktx2Loader = new KTX2Loader().setTranscoderPath("/basis/");
+
 function Shirt(props: ThreeElements["group"]) {
-  // useEffect(() => {
-  //   getShirtState().hydrateFromURL();
-  // }, []);
+  const { gl } = useThree();
 
   const selectedDecal = useSelectedDecal();
 
   const texture = useTexture(`/${selectedDecal.id}.png`);
 
   const { nodes, materials } = useGLTF(
-    "/shirt_baked4.glb",
-  ) as unknown as GLTFResult;
+    "/shirt_optimized.glb",
+    true,
+    false,
+    (loader) => {
+      ktx2Loader.detectSupport(gl); //
+      loader.setKTX2Loader(ktx2Loader); //
+    },
+  ) as unknown as GLTFResult as unknown as GLTFResult;
 
   useFrame((_, delta) => {
     const { selectedColorId } = getShirtState();
@@ -205,5 +212,5 @@ type GLTFResult = GLTF & {
 Object.values(shirtConfig.decals).forEach((d) =>
   useTexture.preload(`/${d.id}.png`),
 );
-useGLTF.preload("/shirt_baked4.glb");
+
 getShirtState().hydrateFromURL();
