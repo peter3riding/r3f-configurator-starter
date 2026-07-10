@@ -6,19 +6,25 @@ import {
   ArrowLeft,
   Plus,
 } from "lucide-react";
-import { useIntro, useShirtActions, useTotalPrice } from "./stores/stores.ts";
+import {
+  useIntro,
+  useShirtActions,
+  useTotalPrice,
+  useCartOpen,
+} from "./stores/stores.ts";
 import { motion, AnimatePresence } from "motion/react";
 import { containerVariants, itemVariants } from "./components/ui/variants.ts";
 import ActionButton from "./components/ui/ActionButton.tsx";
 import { shirtConfig } from "./config/shirtConfig";
 import { useProgress } from "@react-three/drei";
-import { useState } from "react";
 import Cart from "./components/Cart.tsx";
+
 export default function Overlay() {
+  const cartStatus2 = useCartOpen();
+  const { openCart, closeCart } = useShirtActions();
   const intro = useIntro();
   const { active, progress } = useProgress();
   const isLoaded = !active && progress > 0;
-  const [cartStatus, setCartStatus] = useState<boolean>(false);
 
   return (
     <>
@@ -33,7 +39,7 @@ export default function Overlay() {
           delay: isLoaded ? 2.2 : 0,
         }}
       >
-        {cartStatus && <Cart />}
+        {cartStatus2 && <Cart />}
         <motion.header
           initial={{ opacity: 0, y: -120 }}
           animate={{
@@ -46,7 +52,8 @@ export default function Overlay() {
           <Logo width="40" height="40" />
           <button
             className="cursor-pointer pointer-events-auto"
-            onClick={() => setCartStatus((c) => (c === true ? false : true))}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => (cartStatus2 ? closeCart() : openCart())}
           >
             <ShoppingCart />
           </button>
