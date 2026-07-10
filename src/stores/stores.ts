@@ -19,6 +19,7 @@ type State = {
   selectedColorId: ColorKey;
   selectedDecalId: DecalKey;
   cart: Item[];
+  cartOpen: boolean;
 
   downloadHandler: (() => void) | null;
 };
@@ -32,6 +33,8 @@ type Actions = {
   hydrateFromURL: () => void;
   syncURL: () => void;
   addToCart: () => void;
+  openCart: () => void;
+  closeCart: () => void;
 };
 
 const useStore = create<State & Actions>()(
@@ -42,6 +45,10 @@ const useStore = create<State & Actions>()(
       selectedDecalId: "three2",
 
       cart: [],
+
+      cartOpen: false,
+      openCart: () => set({ cartOpen: true }, false, "openCart"),
+      closeCart: () => set({ cartOpen: false }, false, "closeCart"),
 
       downloadHandler: null,
 
@@ -60,7 +67,11 @@ const useStore = create<State & Actions>()(
         const color = shirtConfig.colors[selectedColorId];
         const decal = shirtConfig.decals[selectedDecalId];
         const price = shirtConfig.basePrice + color.price + decal.price;
-        set({ cart: [...cart, { color, decal, price }] }, false, "addToCart");
+        set(
+          { cart: [...cart, { color, decal, price }], cartOpen: true },
+          false,
+          "addToCart",
+        );
       },
 
       registerDownload: (fn) =>
@@ -124,6 +135,8 @@ export const useTotalPrice = () => {
 
 export const useCart = () => useStore((s) => s.cart);
 
+export const useCartOpen = () => useStore((s) => s.cartOpen);
+
 // Actions hook
 export const useShirtActions = () =>
   useStore(
@@ -134,6 +147,8 @@ export const useShirtActions = () =>
       registerDownload: s.registerDownload,
       download: s.download,
       addToCart: s.addToCart,
+      openCart: s.openCart,
+      closeCart: s.closeCart,
     })),
   );
 
