@@ -61,7 +61,7 @@ function Shirt(props: ThreeElements["group"]) {
   const texture = useTexture(`/${selectedDecal.id}.png`);
 
   const { nodes, materials } = useGLTF(
-    "/shirt_optimized.glb",
+    "/shirt_optimized_final.glb",
     true,
     false,
     (loader) => {
@@ -73,7 +73,7 @@ function Shirt(props: ThreeElements["group"]) {
   useFrame((_, delta) => {
     const { selectedColorId } = getShirtState();
     easing.dampC(
-      materials.lambert1.color,
+      materials["lambert1.001"].color,
       shirtConfig.colors[selectedColorId].hex,
       0.25,
       delta,
@@ -86,16 +86,15 @@ function Shirt(props: ThreeElements["group"]) {
         castShadow
         receiveShadow
         geometry={nodes.T_Shirt_male.geometry}
-        material={materials.lambert1}
+        material={materials["lambert1.001"]}
         position={[0.419, 0, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
       >
         <Decal
-          position={[-0.41, 0.01, -0.35]}
+          position={[0.0, 0.37, 0.07]}
           rotation={[
-            (-90 * Math.PI) / 180,
-            (-4 * Math.PI) / 180,
-            (1.6 * Math.PI) / 180,
+            (0 * Math.PI) / 180,
+            (7 * Math.PI) / 180,
+            (-1 * Math.PI) / 180,
           ]}
           scale={[0.15, 0.15, 0.54]}
         >
@@ -142,7 +141,7 @@ function Backdrop() {
       alphaTest={0.2}
       scale={2}
       rotation={[Math.PI / 2, 0, 0]}
-      position={[0, 0, -0.214]}
+      position={[0, 0, -0.15]}
     >
       <RandomizedLight
         amount={5}
@@ -206,7 +205,7 @@ function CanvasExporter() {
 
 type GLTFResult = GLTF & {
   nodes: { T_Shirt_male: THREE.Mesh };
-  materials: { lambert1: THREE.MeshStandardMaterial };
+  materials: { "lambert1.001": THREE.MeshStandardMaterial };
 };
 
 Object.values(shirtConfig.decals).forEach((d) =>
